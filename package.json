@@ -18,6 +18,7 @@
   "homepage": "https://github.com/timothy2008/fetch-apple-refurbish#readme",
   "dependencies": {
     "moment": "^2.24.0",
-    "puppeteer": "^2.1.1"
+    "puppeteer": "^2.1.1",
+    "text-table": "^0.2.0"
   }
 }
