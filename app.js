@@ -60,9 +60,10 @@ function findproducts(inproductsmap, reg){
     return matchedproducts
 }
 
-function mailreport(text){
+function mailreport(text, destmail){
     var transporter = nodemailer.createTransport(config.mailAccount);
     config.mailOptions.text = text;
+    config.mailOptions.to = destmail;
     transporter.sendMail(config.mailOptions, function(error, info){
         if (error) {
             console.log(error);
@@ -72,7 +73,7 @@ function mailreport(text){
     });
 }
 
-function mailreportoauth(text, html){
+function mailreportoauth(text, html, destmail){
     //setup oauth client
     const oauth2Client = new OAuth2(
         config.mailAccountOAuth.auth.clientId,
@@ -89,6 +90,7 @@ function mailreportoauth(text, html){
     )
     config.mailOptions.text = text;
     config.mailOptions.html = html;
+    config.mailOptions.to = destmail;
     transporter.sendMail(config.mailOptions, function(error, info){
         if (error) {
             console.log(error);
@@ -154,6 +156,8 @@ function generatereport(prefixstr, foundproduct){
         if(foundproducts.length <= 0)
             return;
     }
-    mailreportoauth('', report.htmlreport);
+    for(var i = 0; i < config.mailto.length; i++){
+        mailreportoauth('', report.htmlreport, config.mailto[i]);
+    }
     return;
 })();

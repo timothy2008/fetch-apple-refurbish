@@ -104,3 +104,4 @@ dist
 .tern-port
 
 myconfig.js
+pm2.js
