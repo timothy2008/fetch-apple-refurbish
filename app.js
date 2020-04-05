@@ -8,21 +8,29 @@ const { google } = require("googleapis");
 const OAuth2 = google.auth.OAuth2;
 
 const link = 'https://www.apple.com/hk/shop/refurbished/ipad';
-const networkidletimeout = 30000;
 
 async function fetchapplerefusbishproducts(inlink, intimeout){
     const browser = await puppeteer.launch(
-        {headless: false});
+        {headless: config.headless});
       const page = await browser.newPage();
+      page.setViewport({
+            width: config.viewport[0],
+            height: config.viewport[1],
+            deviceScaleFactor: 1,
+         });
       await page.goto(inlink, {
           waitUntil: 'networkidle2',
           timeout: intimeout
       } );
-    
+      await page.screenshot({path: 'screenshot.png'});
       var fetchtime = moment.now();
-
       var products = await page.evaluate(()=>{
-        return Array.from(document.querySelectorAll('#refurbished-category-grid > div > div.as-gridpage.as-gridpage-pagination-hidden > div.as-gridpage-pane > div.as-gridpage-results > ul > li')).map((ele)=>{
+          //check gridbox exists
+          var gridpage = document.querySelectorAll('#refurbished-category-grid > div > div.as-gridpage.as-gridpage-pagination-hidden > div.as-gridpage-pane > div.as-gridpage-results');
+          if(gridpage.length == 0)
+            return undefined;
+          else
+            return Array.from(document.querySelectorAll('#refurbished-category-grid > div > div.as-gridpage.as-gridpage-pagination-hidden > div.as-gridpage-pane > div.as-gridpage-results > ul > li')).map((ele)=>{
             let obj = {};
             obj.name = ele.querySelectorAll('.as-producttile-title')[0].textContent    
             obj.pricestr = ele.querySelectorAll('.as-producttile-currentprice')[0].textContent;
@@ -30,13 +38,15 @@ async function fetchapplerefusbishproducts(inlink, intimeout){
             return obj;
             })
       })
-    
+      await browser.close();
+      if(products == undefined){
+        throw Error("Cannot find gridbox on page");
+      }
+      if(products.length)
       products.forEach((ele,ind)=>{
         products[ind].time = fetchtime;
         products[ind].timestr = moment(products[ind].time).format('YYYY-MM-DD HH:mm:ss');
       })
-    
-      await browser.close();
       return products;
 }
 
@@ -118,9 +128,32 @@ function generatereport(prefixstr, foundproduct){
     var report, prefixstr;
     var beginat = moment.now();
     prefixstr = `Start to search products at ${moment(beginat).format("YYYY-MM-DD HH:mm:ss")}`;
-    var products = await fetchapplerefusbishproducts(link, networkidletimeout);
-    var foundproducts = findproducts(products, /12\.9-inch\ iPad\ Pro/gm);
+    console.log(prefixstr);
+    var products;
+    var n_retries = config.err_retries;
+    var b_retry = false;
+    do{
+        try{
+            products= await fetchapplerefusbishproducts(link, config.networkidletimeout);
+        }catch(err){
+            console.log(err);
+            n_retries--;
+            console.log(`going to retry, ${n_retries} retries left`);
+            b_retry = true;
+        }
+    }while(b_retry && n_retries > 0);
+    if(b_retry){
+        console.log(`Error, program will be terminated now`)
+        process.exit();
+    }
+    var foundproducts = findproducts(products, config.regex_match_product);
+    console.log(`Found ${foundproducts.length} matched products`);
     report = generatereport(prefixstr, foundproducts);
     //mailreportoauth(report.txtreport, '');
+    if(config.b_send_report_only_match){
+        if(foundproducts.length <= 0)
+            return;
+    }
     mailreportoauth('', report.htmlreport);
+    return;
 })();
