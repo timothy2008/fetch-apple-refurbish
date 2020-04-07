@@ -173,16 +173,19 @@ async function addtogooglesheet(sheetid, tables){
     console.log(`Found ${foundproducts.length} matched products`);
     report = generatereport(prefixstr, foundproducts);
     //mailreportoauth(report.txtreport, '');
-    if(config.b_send_report_only_match){
-        if(foundproducts.length > 0)
-		{
-			for(var i = 0; i < config.mailto.length; i++){
-				mailreportoauth('', report.htmlreport, config.mailto[i]);
-			}
+	if(foundproducts.length > 0)
+	{
+		//report only sent if foundproducts.length >0
+		if(config.b_send_report_only_match){
+			
+				for(var i = 0; i < config.mailto.length; i++){
+					mailreportoauth('', report.htmlreport, config.mailto[i]);
+				}
 		}
-    }
-    if(b_uploadtogooglesheet)
-        await addtogooglesheet(config.googlesheetid, interestedfeild(foundproducts));
+		//only upload sent if foundproducts.length >0
+		if(config.b_uploadtogooglesheet)
+			await addtogooglesheet(config.googlesheetid, interestedfeild(foundproducts));
+	}
     return;
 })();
 
