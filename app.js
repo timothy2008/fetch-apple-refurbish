@@ -174,11 +174,12 @@ async function addtogooglesheet(sheetid, tables){
     report = generatereport(prefixstr, foundproducts);
     //mailreportoauth(report.txtreport, '');
     if(config.b_send_report_only_match){
-        if(foundproducts.length <= 0)
-            return;
-    }
-    for(var i = 0; i < config.mailto.length; i++){
-        mailreportoauth('', report.htmlreport, config.mailto[i]);
+        if(foundproducts.length > 0)
+		{
+			for(var i = 0; i < config.mailto.length; i++){
+				mailreportoauth('', report.htmlreport, config.mailto[i]);
+			}
+		}
     }
     if(b_uploadtogooglesheet)
         await addtogooglesheet(config.googlesheetid, interestedfeild(foundproducts));
