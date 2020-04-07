@@ -33,6 +33,9 @@ var config = {
   b_send_report_only_match: true,
   headless: true,
   viewport: [1920,1080],
-  err_retries: 10
+  err_retries: 10,
+  //google sheet id
+  googlesheetid: '',
+  b_uploadtogooglesheet: true
 };
 module.exports = config;

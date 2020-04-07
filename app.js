@@ -5,6 +5,8 @@ var tableify = require('tableify');
 var config = require('./myconfig.js');//please copy and fill in the fields in config.js and save as myconfig.js
 var nodemailer = require('nodemailer');
 const { google } = require("googleapis");
+const { GoogleSpreadsheet } = require('google-spreadsheet');
+const creds = require('./mysheet_client_secret.json');
 const OAuth2 = google.auth.OAuth2;
 
 const link = 'https://www.apple.com/hk/shop/refurbished/ipad';
@@ -99,17 +101,27 @@ function mailreportoauth(text, html, destmail){
         }
     });
 }
+//return to array with fields only interested in
+function interestedfeild(foundproduct){
+    return foundproduct.map((ele)=>{
+        return {name: ele.name, price: ele.pricestr, time: ele.timestr}
+    })
+}
 
 function generatereport(prefixstr, foundproduct){
     var ret = {};
     var foundproducttable;
     if(foundproduct.length > 0){
         //found matched products
-        foundproducttable = foundproduct.map((ele)=>{
-            return [ele.name, ele.pricestr, ele.timestr]
+        foundproducttable = interestedfeild(foundproduct);
+        var foundproducttablearr = foundproducttable.map((ele)=>{
+            var ret = [];
+            for (var key in ele)
+                ret = ret.concat(ele[key])
+            return ret;
         })
-        table = texttable(foundproducttable);
-        htmltable = tableify(foundproducttable);
+        table = texttable(foundproducttablearr);
+        htmltable = tableify(foundproducttablearr);
     }else{
         //No products matched
         table = 'No products matched';
@@ -124,6 +136,15 @@ function generatereport(prefixstr, foundproduct){
         ${htmltable}
         </body></html>`;
     return ret;
+}
+
+async function addtogooglesheet(sheetid, tables){
+    const doc = new GoogleSpreadsheet (sheetid);
+    await doc.useServiceAccountAuth(creds);
+    await doc.loadInfo();
+    const sheet = doc.sheetsByIndex[0]; // or use doc.sheetsById[id]
+    for(var i = 0; i < tables.length; i++)
+        await sheet.addRow(tables[i]);
 }
 
 (async () => {
@@ -159,5 +180,8 @@ function generatereport(prefixstr, foundproduct){
     for(var i = 0; i < config.mailto.length; i++){
         mailreportoauth('', report.htmlreport, config.mailto[i]);
     }
+    if(b_uploadtogooglesheet)
+        await addtogooglesheet(config.googlesheetid, interestedfeild(foundproducts));
     return;
 })();
+

@@ -17,6 +17,7 @@
   },
   "homepage": "https://github.com/timothy2008/fetch-apple-refurbish#readme",
   "dependencies": {
+    "google-spreadsheet": "^3.0.10",
     "googleapis": "^48.0.0",
     "moment": "^2.24.0",
     "nodemailer": "^6.4.6",
