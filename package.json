@@ -18,7 +18,7 @@
   "homepage": "https://github.com/timothy2008/fetch-apple-refurbish#readme",
   "dependencies": {
     "googleapis": "^48.0.0",
-    "moment": "^2.24.0",
+    "moment": "^2.29.4",
     "nodemailer": "^6.4.6",
     "puppeteer": "^2.1.1",
     "tableify": "^1.1.0",
